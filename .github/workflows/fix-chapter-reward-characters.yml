@@ -27,11 +27,13 @@ jobs:
           rewards = ['突撃ハーランド木下', '異常木下', '吉田']
 
           # Do nothing if the definitions are already present.
-          if all(re.search(r'name\\s*:\\s*["\\\']' + re.escape(name) + r'["\\\']', s) for name in rewards):
+          if all((f'name:"{name}"' in s or f"name:'{name}'" in s) for name in rewards):
               print('All chapter reward character definitions are already present.')
               raise SystemExit(0)
 
-          m = re.search(r'const\\s+cards\\s*=\\s*\\[', s)
+          # The source is minified, so locate the exact array declaration without
+          # modifying any text outside the cards array.
+          m = re.search(r'const\s+cards\s*=\s*\[', s)
           if not m:
               raise SystemExit('ERROR: cards array not found; file was not modified.')
 
@@ -46,7 +48,7 @@ jobs:
               if quote:
                   if escape:
                       escape = False
-                  elif ch == '\\\\':
+                  elif ch == '\\':
                       escape = True
                   elif ch == quote:
                       quote = None
@@ -71,7 +73,6 @@ jobs:
               '{name:"吉田",rarity:"SR",cost:200,hp:6000,atk:1111,range:100,speed:1.2,interval:.65,recharge:3,attackType:"範囲",knockback:2,attribute:"赤",specialReward:true}'
           )
 
-          # Preserve the existing array exactly; add only the required separator + objects.
           before = s[:end]
           stripped = before.rstrip()
           separator = '' if stripped.endswith(',') else ','
@@ -85,11 +86,10 @@ jobs:
         shell: python
         run: |
           from pathlib import Path
-          import re
           s = Path('index.html').read_text(encoding='utf-8')
           required = ['突撃ハーランド木下', '異常木下', '吉田']
           for name in required:
-              if not re.search(r'name\\s*:\\s*["\\\']' + re.escape(name) + r'["\\\']', s):
+              if f'name:"{name}"' not in s:
                   raise SystemExit(f'ERROR: missing definition for {name}')
           print('Validation passed.')
 
