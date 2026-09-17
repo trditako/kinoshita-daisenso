@@ -20,21 +20,17 @@ jobs:
         shell: python
         run: |
           from pathlib import Path
+          import re
 
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
+          rewards = ['突撃ハーランド木下', '異常木下', '吉田']
 
-          rewards = [
-              '突撃ハーランド木下',
-              '異常木下',
-              '吉田',
-          ]
-
-          if all(name in s for name in rewards):
-              print('All chapter reward characters are already present.')
+          # Do nothing if the definitions are already present.
+          if all(re.search(r'name\\s*:\\s*["\\\']' + re.escape(name) + r'["\\\']', s) for name in rewards):
+              print('All chapter reward character definitions are already present.')
               raise SystemExit(0)
 
-          import re
           m = re.search(r'const\\s+cards\\s*=\\s*\\[', s)
           if not m:
               raise SystemExit('ERROR: cards array not found; file was not modified.')
@@ -74,7 +70,12 @@ jobs:
               '{name:"異常木下",rarity:"SSR",cost:3000,hp:15000,atk:3000,range:200,speed:.3,interval:.5,recharge:45,attackType:"単体",knockback:5,attribute:"赤",specialReward:true},'
               '{name:"吉田",rarity:"SR",cost:200,hp:6000,atk:1111,range:100,speed:1.2,interval:.65,recharge:3,attackType:"範囲",knockback:2,attribute:"赤",specialReward:true}'
           )
-          new_s = s[:end] + addition + s[end:]
+
+          # Preserve the existing array exactly; add only the required separator + objects.
+          before = s[:end]
+          stripped = before.rstrip()
+          separator = '' if stripped.endswith(',') else ','
+          new_s = before + separator + addition + s[end:]
           if new_s == s:
               raise SystemExit('ERROR: no change produced.')
           p.write_text(new_s, encoding='utf-8')
@@ -84,10 +85,12 @@ jobs:
         shell: python
         run: |
           from pathlib import Path
+          import re
           s = Path('index.html').read_text(encoding='utf-8')
-          for x in ['突撃ハーランド木下','異常木下','吉田']:
-              if x not in s:
-                  raise SystemExit(f'ERROR: missing {x}')
+          required = ['突撃ハーランド木下', '異常木下', '吉田']
+          for name in required:
+              if not re.search(r'name\\s*:\\s*["\\\']' + re.escape(name) + r'["\\\']', s):
+                  raise SystemExit(f'ERROR: missing definition for {name}')
           print('Validation passed.')
 
       - name: Commit patch
@@ -103,4 +106,4 @@ jobs:
           git commit -m "fix: add chapter reward characters to card list"
           git push
 
-# Triggered deliberately on the isolated repair branch before any merge to main.
+# This workflow operates only on the isolated repair branch. Main is untouched until the verified change is merged.
