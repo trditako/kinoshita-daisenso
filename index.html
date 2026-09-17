@@ -177,7 +177,9 @@ const cards=[
 ,{name:"流星木下",cost:850,hp:1500,atk:300,range:135,spd:.7,interval:1.35,recharge:17.0,icon:"☄️",motion:"awakened",attackType:"area",kb:3,series:"星空の木下団",rarity:"SR",ability:{name:"流星落とし",desc:"攻撃時40%で敵を後退させる強力な一撃",knockbackChance:.4}}
 ,{name:"星王木下",cost:1900,hp:3900,atk:620,range:175,spd:.48,interval:1.6,recharge:30.0,icon:"🌟",motion:"super",attackType:"area",kb:5,series:"星空の木下団",rarity:"SSR",ability:{name:"星王の輝き",desc:"赤属性に2倍の攻撃＋攻撃時35%で50%減速・3秒",strong:{赤:2},slow:{trait:"赤",chance:.35,factor:.5,duration:3}}},
 {name:"狂乱の木下",cost:2400,hp:4600,atk:760,range:128,spd:.72,interval:1.25,recharge:36.0,icon:"😡",motion:"super",attackType:"area",kb:5,series:"狂乱の木下",rarity:"SSR",specialReward:true,ability:{name:"狂乱の猛攻",desc:"攻撃力が高く、攻撃時30%で敵を後退させる",knockbackChance:.3}}
- ,{name:"突撃ハーランド木下",rarity:"SR",cost:777,hp:2500,atk:1500,range:60,speed:2.5,interval:.7,recharge:25,attackType:"範囲",knockback:2,attribute:"無",specialReward:true},{name:"異常木下",rarity:"SSR",cost:3000,hp:15000,atk:3000,range:200,speed:.3,interval:.5,recharge:45,attackType:"単体",knockback:5,attribute:"赤",specialReward:true},{name:"吉田",rarity:"SR",cost:200,hp:6000,atk:1111,range:100,speed:1.2,interval:.65,recharge:3,attackType:"範囲",knockback:2,attribute:"赤",specialReward:true}];
+ ,{name:"突撃ハーランド木下",cost:777,hp:2500,atk:1500,range:60,spd:2.5,interval:.7,recharge:25,icon:"🏃",motion:"power",attackType:"area",kb:2,series:"日本編 第1章クリア報酬",rarity:"SR",specialReward:true,ability:{name:"突撃ハーランド",desc:"高速で前線へ進み、範囲攻撃を行う"}},
+{name:"異常木下",cost:3000,hp:15000,atk:3000,range:200,spd:.3,interval:.5,recharge:45,icon:"👁️",motion:"super",attackType:"single",kb:5,series:"日本編 第2章クリア報酬",rarity:"SSR",specialReward:true,ability:{name:"異常な力",desc:"高HP・高火力・超長射程の単体攻撃"}},
+{name:"吉田",cost:200,hp:6000,atk:1111,range:100,spd:1.2,interval:.65,recharge:3,icon:"🧑",motion:"basic",attackType:"area",kb:2,series:"日本編 第3章クリア報酬",rarity:"SR",specialReward:true,ability:{name:"吉田の一撃",desc:"短い再出撃時間で範囲攻撃を行う"}}];
 // 全味方キャラクターに属性を付与。対人戦ではこの属性を相手側にも同期します。
 const allyTraits={
   '木下':'無','強化木下':'赤','マッチョ木下':'青','木下（野球）':'赤','木下（覚醒）':'浮',
