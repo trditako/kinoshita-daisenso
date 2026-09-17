@@ -1,0 +1,72 @@
+name: Repair chapter reward character system
+on:
+  push:
+    branches: [main]
+jobs:
+  repair:
+    if: github.event.head_commit.message != 'chore: remove temporary reward repair workflow'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rebuild reward character definitions
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          old=re.compile(r'\s*,\{name:"突撃ハーランド木下".*?\{name:"吉田".*?specialReward:true\}\];',re.S)
+          new='''\n,{name:"突撃ハーランド木下",cost:777,hp:2500,atk:1500,range:60,spd:2.5,interval:.7,recharge:25,icon:"🏃",motion:"power",attackType:"area",kb:2,series:"日本編 第1章クリア報酬",rarity:"SR",specialReward:true,ability:{name:"突撃ハーランド",desc:"高速で前線へ進み、範囲攻撃を行う"}}\n,{name:"異常木下",cost:3000,hp:15000,atk:3000,range:200,spd:.3,interval:.5,recharge:45,icon:"👁️",motion:"super",attackType:"single",kb:5,series:"日本編 第2章クリア報酬",rarity:"SSR",specialReward:true,ability:{name:"異常な力",desc:"高HP・高火力・超長射程の単体攻撃"}}\n,{name:"吉田",cost:200,hp:6000,atk:1111,range:100,spd:1.2,interval:.65,recharge:3,icon:"🧑",motion:"basic",attackType:"area",kb:2,series:"日本編 第3章クリア報酬",rarity:"SR",specialReward:true,ability:{name:"吉田の一撃",desc:"短い再出撃時間で範囲攻撃を行う"}}];'''
+          if not old.search(s):
+            raise SystemExit('reward block not found')
+          s2=old.sub(new,s,count=1)
+          # Make the client explicitly know the canonical reward indices after the 20 normal cards.
+          marker='const allyTraits={'
+          if marker in s2 and 'const CHAPTER_REWARD_CARD_INDEXES=[20,21,22];' not in s2:
+            s2=s2.replace(marker,'const CHAPTER_REWARD_CARD_INDEXES=[20,21,22];\n'+marker,1)
+          p.write_text(s2,encoding='utf-8')
+          print('reward names:', {n:s2.count(n) for n in ['突撃ハーランド木下','異常木下','吉田']})
+          print('reward block normalized:', 'spd:2.5' in s2 and 'attackType:"area"' in s2 and 'kb:2' in s2)
+          PY
+      - name: Validate JavaScript card array
+        run: |
+          node <<'JS'
+          const fs=require('fs');
+          const s=fs.readFileSync('index.html','utf8');
+          const m=s.match(/const cards=\[(.*?)\];/s);
+          if(!m) throw new Error('cards array not found');
+          const cards=Function(`"use strict";return [${m[1]}]`)();
+          console.log('CARD_COUNT=',cards.length);
+          console.log('REWARD_INDEXES=',cards.map((c,i)=>[c.name,i]).filter(x=>['突撃ハーランド木下','異常木下','吉田'].includes(x[0])));
+          if(cards.length!==23) throw new Error(`expected 23 cards, got ${cards.length}`);
+          for(const n of ['突撃ハーランド木下','異常木下','吉田']) if(!cards.some(c=>c.name===n)) throw new Error('missing '+n);
+          for(const i of [20,21,22]) { const c=cards[i]; if(!c.spd || !c.kb || !c.attackType) throw new Error('invalid canonical fields at '+i); }
+          JS
+      - name: Bump service worker cache
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('service-worker.js')
+          if p.exists():
+            s=p.read_text(encoding='utf-8')
+            s=s.replace('kinoshita-daisen-v2','kinoshita-daisen-v3')
+            p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit repaired files
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html service-worker.js
+          git commit -m 'fix: rebuild chapter reward character definitions'
+          git push
+      - name: Remove temporary workflow
+        if: always()
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          rm -f .github/workflows/repair-chapter-rewards.yml
+          git add -A
+          git diff --cached --quiet || git commit -m 'chore: remove temporary reward repair workflow'
+          git push
