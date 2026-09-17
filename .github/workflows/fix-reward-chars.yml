@@ -1,0 +1,51 @@
+name: Fix reward chars
+on:
+  push:
+    branches:
+      - main
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fix
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          a=s.index('{name:"突撃ハーランド木下"')
+          b=s.index('];',a)+2
+          block=s[a:b]
+          prefix=s[:a]
+          suffix=s[b:]
+          # The reward block is the final three cards before the cards array closes.
+          if block.count('{name:"突撃ハーランド木下"') != 1 or block.count('{name:"異常木下"') != 1 or block.count('{name:"吉田"') != 1:
+              raise SystemExit('unexpected reward block')
+          new='''{name:"突撃ハーランド木下",cost:777,hp:2500,atk:1500,range:60,spd:2.5,interval:.7,recharge:25,icon:"🏃",motion:"power",attackType:"area",kb:2,series:"日本編 第1章クリア報酬",rarity:"SR",specialReward:true,ability:{name:"突撃ハーランド",desc:"高速で前線へ進み、範囲攻撃を行う"}},\n{name:"異常木下",cost:3000,hp:15000,atk:3000,range:200,spd:.3,interval:.5,recharge:45,icon:"👁️",motion:"super",attackType:"single",kb:5,series:"日本編 第2章クリア報酬",rarity:"SSR",specialReward:true,ability:{name:"異常な力",desc:"高HP・高火力・超長射程の単体攻撃"}},\n{name:"吉田",cost:200,hp:6000,atk:1111,range:100,spd:1.2,interval:.65,recharge:3,icon:"🧑",motion:"basic",attackType:"area",kb:2,series:"日本編 第3章クリア報酬",rarity:"SR",specialReward:true,ability:{name:"吉田の一撃",desc:"短い再出撃時間で範囲攻撃を行う"}}];'''
+          p.write_text(prefix+new+suffix,encoding='utf-8')
+          print('reward block fixed')
+          PY
+      - name: Validate
+        run: |
+          node - <<'JS'
+          const fs=require('fs');
+          const s=fs.readFileSync('index.html','utf8');
+          const m=s.match(/const cards=\[(.*?)\];/s);
+          if(!m) throw new Error('cards not found');
+          const cards=Function('return ['+m[1]+']')();
+          console.log('cards=',cards.length);
+          console.log(cards.slice(-3).map((c,i)=>({i:cards.length-3+i,name:c.name,spd:c.spd,kb:c.kb,attackType:c.attackType})));
+          if(cards.length!==23) throw new Error('expected 23 cards');
+          if(cards.slice(-3).some(c=>c.spd===undefined||c.kb===undefined)) throw new Error('reward fields invalid');
+          JS
+          git diff --check
+      - name: Commit
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html
+          git commit -m 'fix: rebuild chapter reward character data'
+          git push
