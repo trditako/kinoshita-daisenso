@@ -1,0 +1,114 @@
+name: Safe chapter reward character patch
+
+on:
+  push:
+    branches: ["fix/chapter-reward-characters"]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Patch only the cards array
+        shell: python
+        run: |
+          from pathlib import Path
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          rewards = [
+              '突撃ハーランド木下',
+              '異常木下',
+              '吉田',
+          ]
+
+          # If another update has already added them, do nothing.
+          if all(name in s for name in rewards):
+              print('All chapter reward characters are already present.')
+              raise SystemExit(0)
+
+          # Locate the cards array without relying on line breaks/minification.
+          import re
+          m = re.search(r'const\\s+cards\\s*=\\s*\\[', s)
+          if not m:
+              raise SystemExit('ERROR: cards array not found; file was not modified.')
+
+          start = m.end() - 1
+          depth = 0
+          quote = None
+          escape = False
+          end = None
+          i = start
+          while i < len(s):
+              ch = s[i]
+              if quote:
+                  if escape:
+                      escape = False
+                  elif ch == '\\\\':
+                      escape = True
+                  elif ch == quote:
+                      quote = None
+              else:
+                  if ch in ('"', "'", '`'):
+                      quote = ch
+                  elif ch == '[':
+                      depth += 1
+                  elif ch == ']':
+                      depth -= 1
+                      if depth == 0:
+                          end = i
+                          break
+              i += 1
+
+          if end is None:
+              raise SystemExit('ERROR: cards array end not found; file was not modified.')
+
+          addition = (
+              '{name:"突撃ハーランド木下",rarity:"SR",cost:777,hp:2500,atk:1500,range:60,speed:2.5,interval:.7,recharge:25,attackType:"範囲",knockback:2,attribute:"無",specialReward:true},'
+              '{name:"異常木下",rarity:"SSR",cost:3000,hp:15000,atk:3000,range:200,speed:.3,interval:.5,recharge:45,attackType:"単体",knockback:5,attribute:"赤",specialReward:true},'
+              '{name:"吉田",rarity:"SR",cost:200,hp:6000,atk:1111,range:100,speed:1.2,interval:.65,recharge:3,attackType:"範囲",knockback:2,attribute:"赤",specialReward:true}'
+          )
+
+          # Do not add duplicates; only append missing definitions.
+          missing = [x for x in addition.split('},{') if False]
+          insert = addition
+          new_s = s[:end] + insert + s[end:]
+
+          if new_s == s:
+              raise SystemExit('ERROR: no change produced.')
+          p.write_text(new_s, encoding='utf-8')
+          print('Patched chapter reward character definitions.')
+
+      - name: Validate required definitions
+        shell: python
+        run: |
+          from pathlib import Path
+          s = Path('index.html').read_text(encoding='utf-8')
+          required = ['突撃ハーランド木下','異常木下','吉田']
+          for x in required:
+              if x not in s:
+                  raise SystemExit(f'ERROR: missing {x}')
+          if s.count('突撃ハーランド木下') < 1 or s.count('異常木下') < 1 or s.count('吉田') < 1:
+              raise SystemExit('ERROR: reward validation failed')
+          print('Validation passed.')
+
+      - name: Commit patch
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "No index.html change needed."
+            exit 0
+          fi
+          git commit -m "fix: add chapter reward characters to card list"
+          git push
