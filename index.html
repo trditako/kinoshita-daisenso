@@ -177,9 +177,9 @@ const cards=[
 ,{name:"流星木下",cost:850,hp:1500,atk:300,range:135,spd:.7,interval:1.35,recharge:17.0,icon:"☄️",motion:"awakened",attackType:"area",kb:3,series:"星空の木下団",rarity:"SR",ability:{name:"流星落とし",desc:"攻撃時40%で敵を後退させる強力な一撃",knockbackChance:.4}}
 ,{name:"星王木下",cost:1900,hp:3900,atk:620,range:175,spd:.48,interval:1.6,recharge:30.0,icon:"🌟",motion:"super",attackType:"area",kb:5,series:"星空の木下団",rarity:"SSR",ability:{name:"星王の輝き",desc:"赤属性に2倍の攻撃＋攻撃時35%で50%減速・3秒",strong:{赤:2},slow:{trait:"赤",chance:.35,factor:.5,duration:3}}},
 {name:"狂乱の木下",cost:2400,hp:4600,atk:760,range:128,spd:.72,interval:1.25,recharge:36.0,icon:"😡",motion:"super",attackType:"area",kb:5,series:"狂乱の木下",rarity:"SSR",specialReward:true,ability:{name:"狂乱の猛攻",desc:"攻撃力が高く、攻撃時30%で敵を後退させる",knockbackChance:.3}}
- ,{name:"突撃ハーランド木下",cost:777,hp:2500,atk:1500,range:60,spd:2.5,interval:.7,recharge:25,icon:"🏃",motion:"power",attackType:"area",kb:2,series:"日本編 第1章クリア報酬",rarity:"SR",specialReward:true,ability:{name:"突撃ハーランド",desc:"高速で前線へ進み、範囲攻撃を行う"}},
-{name:"異常木下",cost:3000,hp:15000,atk:3000,range:200,spd:.3,interval:.5,recharge:45,icon:"👁️",motion:"super",attackType:"single",kb:5,series:"日本編 第2章クリア報酬",rarity:"SSR",specialReward:true,ability:{name:"異常な力",desc:"高HP・高火力・超長射程の単体攻撃"}},
-{name:"吉田",cost:200,hp:6000,atk:1111,range:100,spd:1.2,interval:.65,recharge:3,icon:"🧑",motion:"basic",attackType:"area",kb:2,series:"日本編 第3章クリア報酬",rarity:"SR",specialReward:true,ability:{name:"吉田の一撃",desc:"短い再出撃時間で範囲攻撃を行う"}}];
+ ,{name:"突撃ハーランド木下",cost:777,hp:2500,atk:1500,range:60,spd:2.5,interval:.7,recharge:25,icon:"🏃",motion:"power",attackType:"area",kb:2,series:"日本編 第1章クリア報酬",rarity:"SR",specialReward:true,chapterReward:1,ability:{name:"突撃ハーランド",desc:"高速で前線へ進み、範囲攻撃を行う"}},
+{name:"異常木下",cost:3000,hp:15000,atk:3000,range:200,spd:.3,interval:.5,recharge:45,icon:"👁️",motion:"super",attackType:"single",kb:5,series:"日本編 第2章クリア報酬",rarity:"SSR",specialReward:true,chapterReward:2,ability:{name:"異常な力",desc:"高HP・高火力・超長射程の単体攻撃"}},
+{name:"吉田",cost:200,hp:6000,atk:1111,range:100,spd:1.2,interval:.65,recharge:3,icon:"🧑",motion:"basic",attackType:"area",kb:2,series:"日本編 第3章クリア報酬",rarity:"SR",specialReward:true,chapterReward:3,ability:{name:"吉田の一撃",desc:"短い再出撃時間で範囲攻撃を行う"}}];
 // 全味方キャラクターに属性を付与。対人戦ではこの属性を相手側にも同期します。
 const allyTraits={
   '木下':'無','強化木下':'赤','マッチョ木下':'青','木下（野球）':'赤','木下（覚醒）':'浮',
@@ -188,6 +188,23 @@ const allyTraits={
   '木下（AI）':'鋼','星読み木下':'光','流星木下':'浮','星王木下':'光','狂乱の木下':'黒','突撃ハーランド木下':'無','異常木下':'赤','吉田':'赤'
 };
 cards.forEach(c=>{c.trait=allyTraits[c.name]||'無';});
+// 日本編クリア報酬キャラクターは常にこの3枠へ再構築する。
+// 既存セーブや古いキャッシュに残った壊れた定義を引き継がない。
+const CHAPTER_REWARD_INDEX=[20,21,22];
+const CHAPTER_REWARD_NAMES=['突撃ハーランド木下','異常木下','吉田'];
+function chapterRewardIndex(chapter){return CHAPTER_REWARD_INDEX[chapter-1]??-1;}
+function rebuildChapterRewardCharacters(){
+  const defs=[
+    {name:"突撃ハーランド木下",cost:777,hp:2500,atk:1500,range:60,spd:2.5,interval:.7,recharge:25,icon:"🏃",motion:"power",attackType:"area",kb:2,series:"日本編 第1章クリア報酬",rarity:"SR",specialReward:true,chapterReward:1,ability:{name:"突撃ハーランド",desc:"高速で前線へ進み、範囲攻撃を行う"}},
+{name:"異常木下",cost:3000,hp:15000,atk:3000,range:200,spd:.3,interval:.5,recharge:45,icon:"👁️",motion:"super",attackType:"single",kb:5,series:"日本編 第2章クリア報酬",rarity:"SSR",specialReward:true,chapterReward:2,ability:{name:"異常な力",desc:"高HP・高火力・超長射程の単体攻撃"}},
+{name:"吉田",cost:200,hp:6000,atk:1111,range:100,spd:1.2,interval:.65,recharge:3,icon:"🧑",motion:"basic",attackType:"area",kb:2,series:"日本編 第3章クリア報酬",rarity:"SR",specialReward:true,chapterReward:3,ability:{name:"吉田の一撃",desc:"短い再出撃時間で範囲攻撃を行う"}},
+    undefined,
+    undefined
+  ];
+  cards.splice(20,3,...defs);
+  defs.forEach((c,i)=>{c.trait=allyTraits[c.name]||'無';c.chapterReward=i+1;c.specialReward=true;});
+}
+rebuildChapterRewardCharacters();
 const enemyTypes={
 鬼木下:{name:"鬼木下",icon:"👹",trait:"無",hp:180,atk:25,range:50,spd:.6,interval:.9,attackType:"single",kb:3,money:40},
 赤鬼木下:{name:"赤鬼木下",icon:"👺",trait:"赤",hp:300,atk:34,range:52,spd:.58,interval:1.0,attackType:"single",kb:2,money:55},
@@ -544,6 +561,8 @@ let ownedFlags;try{ownedFlags=JSON.parse(storage.getItem('kinoshitaOwnedFlags')|
 if(!Array.isArray(ownedFlags)){const oldOwned=Math.max(1,Math.min(cards.length,Number(storage.getItem('kinoshitaOwned')||1)));ownedFlags=cards.map((_,i)=>i<oldOwned);}
 while(ownedFlags.length<cards.length)ownedFlags.push(false);ownedFlags=ownedFlags.slice(0,cards.length);ownedFlags[0]=true;
 for(let si=0;si<unlocked;si++){if(stages[si].reward&&stages[si].reward-1<cards.length)ownedFlags[stages[si].reward-1]=true;}
+// 章クリア済みの既存プレイヤーには、3体を即時に再付与する。
+for(let ch=1;ch<=3;ch++){if((chapterClears[ch-1]||0)>=48){const ri=chapterRewardIndex(ch);if(ri>=0&&ri<cards.length)ownedFlags[ri]=true;}}
 function hasCharacter(i){return !!ownedFlags[i];}
 function syncOwnedCount(){owned=ownedFlags.filter(Boolean).length;}
 function addStageXP(){const gain=Math.max(1,Math.round(currentStage().xp||0));playerXP+=gain;return gain;}
@@ -838,7 +857,7 @@ function quitBattle(){
  renderStageSelect();
  renderCards();
 }
-function showResult(win){if(rankMode){finishRank(win);return;}if(pvpMode){pvpSend({type:'result',win});}running=false;paused=false;stopBGM();playSE(win?'win':'lose');pvpMode=false;document.getElementById('battlePauseBtn').style.display='';document.getElementById('pause').style.display='none';document.getElementById('detail').style.display='none';document.getElementById('start').style.display='none';const r=document.getElementById('result'),title=document.getElementById('resultTitle'),text=document.getElementById('resultText'),next=document.getElementById('nextBtn');r.style.setProperty('display','flex','important');r.style.setProperty('position','fixed','important');r.style.setProperty('inset','0','important');r.style.setProperty('z-index','99999','important');r.style.setProperty('pointer-events','auto','important');document.getElementById('rankLobby').style.display='none';document.getElementById('pvpLobby').style.display='none';if(win){const s=currentStage();title.textContent='🎉 '+(selectedMode==='event'?'イベントステージクリア！':`日本編 第${selectedChapter}章 クリア！`);if(selectedMode==='japan'){if(selectedChapter===1&&selectedStage===unlocked&&unlocked<48)unlocked++;const beforeClear=chapterClears[selectedChapter-1]||0;chapterClears[selectedChapter-1]=Math.max(beforeClear,selectedStage);}let rewardText='';const gained=addStageXP();if(selectedMode==='japan'&&selectedChapter===1&&s.reward){const rewardIndex=s.reward-1;const wasOwned=hasCharacter(rewardIndex);ownedFlags[rewardIndex]=true;syncOwnedCount();if(!formation.length)formation=[0];if(!wasOwned){rewardText='クリア報酬：'+cards[rewardIndex].name+' を入手しました！';}else{rewardText='クリア報酬：'+s.rewardName+'（入手済み）';}}else if(selectedMode==='japan'&&selectedStage===48){const rewardIndex=[20,21,22][selectedChapter-1];if(Number.isInteger(rewardIndex)&&rewardIndex<cards.length){const wasOwned=hasCharacter(rewardIndex);ownedFlags[rewardIndex]=true;syncOwnedCount();if(!formation.length)formation=[0];rewardText=wasOwned?'クリア報酬：'+cards[rewardIndex].name+'（入手済み）':'クリア報酬：'+cards[rewardIndex].name+' を入手しました！';}}else if(selectedMode==='event'&&s.eventReward){eventClears[s.name]=true;const rewardIndex=s.rewardCharacter?cards.findIndex(c=>c.name===s.rewardCharacter):-1;const wasOwned=rewardIndex>=0&&hasCharacter(rewardIndex);if(rewardIndex>=0&&!wasOwned){ownedFlags[rewardIndex]=true;syncOwnedCount();if(!formation.length)formation=[0];rewardText='クリア報酬：'+s.eventReward+' を入手しました！';}else{rewardText='クリア報酬：'+s.eventReward+'（入手済み）';}}else{rewardText=selectedMode==='event'?'イベント報酬：プレイヤーXPを獲得！':'クリア報酬：プレイヤーXPを獲得！';}const gachaGain=120+Math.floor(s.xp/4);gachaCoins+=gachaGain;rewardText+='\nプレイヤーXPを '+gained+' 獲得しました。現在のXP：'+playerXP+'。\n🪙 木下コインを '+gachaGain+' 枚獲得しました。';save();text.textContent=rewardText;const hasNext=selectedMode==='japan'?selectedStage<48:false;next.style.display=hasNext?'inline-block':'none';next.textContent=hasNext?'次のステージへ':'ステージ選択へ';}else{title.textContent='💥 敗北…';text.textContent='もう一度挑戦してみよう。';next.style.display='inline-block';next.textContent='もう一度挑戦';}}
+function showResult(win){if(rankMode){finishRank(win);return;}if(pvpMode){pvpSend({type:'result',win});}running=false;paused=false;stopBGM();playSE(win?'win':'lose');pvpMode=false;document.getElementById('battlePauseBtn').style.display='';document.getElementById('pause').style.display='none';document.getElementById('detail').style.display='none';document.getElementById('start').style.display='none';const r=document.getElementById('result'),title=document.getElementById('resultTitle'),text=document.getElementById('resultText'),next=document.getElementById('nextBtn');r.style.setProperty('display','flex','important');r.style.setProperty('position','fixed','important');r.style.setProperty('inset','0','important');r.style.setProperty('z-index','99999','important');r.style.setProperty('pointer-events','auto','important');document.getElementById('rankLobby').style.display='none';document.getElementById('pvpLobby').style.display='none';if(win){const s=currentStage();title.textContent='🎉 '+(selectedMode==='event'?'イベントステージクリア！':`日本編 第${selectedChapter}章 クリア！`);if(selectedMode==='japan'){if(selectedChapter===1&&selectedStage===unlocked&&unlocked<48)unlocked++;const beforeClear=chapterClears[selectedChapter-1]||0;chapterClears[selectedChapter-1]=Math.max(beforeClear,selectedStage);}let rewardText='';const gained=addStageXP();if(selectedMode==='japan'&&selectedChapter===1&&s.reward){const rewardIndex=s.reward-1;const wasOwned=hasCharacter(rewardIndex);ownedFlags[rewardIndex]=true;syncOwnedCount();if(!formation.length)formation=[0];if(!wasOwned){rewardText='クリア報酬：'+cards[rewardIndex].name+' を入手しました！';}else{rewardText='クリア報酬：'+s.rewardName+'（入手済み）';}}else if(selectedMode==='japan'&&selectedStage===48){const rewardIndex=chapterRewardIndex(selectedChapter);if(Number.isInteger(rewardIndex)&&rewardIndex<cards.length){const wasOwned=hasCharacter(rewardIndex);ownedFlags[rewardIndex]=true;syncOwnedCount();if(!formation.length)formation=[0];rewardText=wasOwned?'クリア報酬：'+cards[rewardIndex].name+'（入手済み）':'クリア報酬：'+cards[rewardIndex].name+' を入手しました！';}}else if(selectedMode==='event'&&s.eventReward){eventClears[s.name]=true;const rewardIndex=s.rewardCharacter?cards.findIndex(c=>c.name===s.rewardCharacter):-1;const wasOwned=rewardIndex>=0&&hasCharacter(rewardIndex);if(rewardIndex>=0&&!wasOwned){ownedFlags[rewardIndex]=true;syncOwnedCount();if(!formation.length)formation=[0];rewardText='クリア報酬：'+s.eventReward+' を入手しました！';}else{rewardText='クリア報酬：'+s.eventReward+'（入手済み）';}}else{rewardText=selectedMode==='event'?'イベント報酬：プレイヤーXPを獲得！':'クリア報酬：プレイヤーXPを獲得！';}const gachaGain=120+Math.floor(s.xp/4);gachaCoins+=gachaGain;rewardText+='\nプレイヤーXPを '+gained+' 獲得しました。現在のXP：'+playerXP+'。\n🪙 木下コインを '+gachaGain+' 枚獲得しました。';save();text.textContent=rewardText;const hasNext=selectedMode==='japan'?selectedStage<48:false;next.style.display=hasNext?'inline-block':'none';next.textContent=hasNext?'次のステージへ':'ステージ選択へ';}else{title.textContent='💥 敗北…';text.textContent='もう一度挑戦してみよう。';next.style.display='inline-block';next.textContent='もう一度挑戦';}}
 // ===== プレイヤー対戦 =====
 let pvpMode=false,pvpRole='',pvpPeer=null,pvpConn=null,pvpRoom='',pvpPassword='',pvpNonce=1,pvpAuthenticated=false,pvpReadyLocal=false,pvpReadyRemote=false,pvpStarted=false;
 // ===== ランク戦 =====
@@ -874,7 +893,7 @@ function aiFreshAccount(index,absoluteIndex){
 function aiOwnedFromProgress(ai){
  const owned=new Set([0]);
  const cc=Array.isArray(ai.chapterClears)?ai.chapterClears:[Math.min(48,Number(ai.stageClears||0)),0,0];
- for(let ch=0;ch<3;ch++){const clear=Math.max(0,Math.min(48,Number(cc[ch]||0)));for(let si=0;si<clear;si++){const r=chapterStages[ch]?.[si]?.reward;if(Number.isInteger(r)&&r>0&&r-1<cards.length)owned.add(r-1);}if(clear>=48){const chapterReward=[20,21,22][ch];if(chapterReward<cards.length)owned.add(chapterReward);}}
+ for(let ch=0;ch<3;ch++){const clear=Math.max(0,Math.min(48,Number(cc[ch]||0)));for(let si=0;si<clear;si++){const r=chapterStages[ch]?.[si]?.reward;if(Number.isInteger(r)&&r>0&&r-1<cards.length)owned.add(r-1);}if(clear>=48){const chapterReward=chapterRewardIndex(ch+1);if(chapterReward>=0&&chapterReward<cards.length)owned.add(chapterReward);}}
  // 狂乱の木下はイベント報酬。イベントクリア記録があるAIだけ所持できる。
  if(ai.eventClears&&ai.eventClears['狂乱の木下降臨']){const idx=cards.findIndex(c=>c.name==='狂乱の木下');if(idx>=0)owned.add(idx);}
  return [...owned];
