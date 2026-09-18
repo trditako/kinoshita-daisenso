@@ -1,4 +1,4 @@
-const CACHE_NAME = "kinoshita-daisen-v3";
+const CACHE_NAME = "kinoshita-daisen-v4";
 
 const APP_SHELL = [
   "./",
@@ -7,9 +7,6 @@ const APP_SHELL = [
   "./icon-192.png",
   "./icon-512.png"
 ];
-
-// キャラクター定義は index.html が唯一の正規データ源です。
-// 古い報酬補正スクリプトは削除し、HTMLの最新版をそのまま配信します。
 
 self.addEventListener("install", event => {
   self.skipWaiting();
@@ -29,7 +26,8 @@ self.addEventListener("activate", event => {
 self.addEventListener("fetch", event => {
   if (event.request.method !== "GET") return;
 
-  const isHtml = event.request.mode === "navigate" ||
+  const isHtml =
+    event.request.mode === "navigate" ||
     event.request.destination === "document" ||
     event.request.url.endsWith("/index.html") ||
     event.request.url.endsWith("/kinoshita-daisenso/");
@@ -37,15 +35,16 @@ self.addEventListener("fetch", event => {
   event.respondWith(
     fetch(event.request)
       .then(response => {
-        if (isHtml) return withRewardFix(response).then(fixed => {
-          const copy = fixed.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
-          return fixed;
-        });
+        if (!response || !response.ok) throw new Error("network response unavailable");
         const copy = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
+        event.waitUntil(
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy))
+        );
         return response;
       })
-      .catch(() => caches.match(event.request))
+      .catch(() => caches.match(event.request).then(cached => {
+        if (cached) return cached;
+        return caches.match("./index.html");
+      }))
   );
 });
